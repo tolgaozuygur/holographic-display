@@ -1,0 +1,56 @@
+[gd_scene load_steps=5 format=3 uid="uid://mm8lb3coui2v"]
+
+[ext_resource type="Script" uid="uid://fsb2lfofoiqb" path="res://holo.gd" id="1_0xm2m"]
+[ext_resource type="Script" uid="uid://3hlhfbwpcrs0" path="res://websocket.gd" id="2_h2yge"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_noarx"]
+
+[sub_resource type="Environment" id="Environment_a202f"]
+background_mode = 1
+ambient_light_source = 1
+reflected_light_source = 1
+
+[node name="main" type="Node3D" node_paths=PackedStringArray("camera_node", "target_node", "websocket_node", "light1", "light2", "light3", "light4")]
+script = ExtResource("1_0xm2m")
+camera_node = NodePath("CameraNode")
+target_node = NodePath("Node3D")
+websocket_node = NodePath("WebSocket")
+light1 = NodePath("DirectionalLight3D")
+light2 = NodePath("DirectionalLight3D2")
+light3 = NodePath("DirectionalLight3D3")
+light4 = NodePath("DirectionalLight3D4")
+
+[node name="Node3D" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_noarx")
+
+[node name="CameraNode" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraNode"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.52423, 5.673)
+fov = 35.0
+size = 3.5
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.481646, -0.532848, 0.695766, 0.338535, 0.84542, 0.413108, -0.808338, 0.0365692, 0.587581, 7.99653, 4.70451, 8.07859)
+light_energy = 1.5
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.62465, 0.370272, -0.68754, 0.236432, 0.92879, 0.285392, 0.744253, 0.0157137, -0.667713, -8.01558, 4.76179, -7.91595)
+light_energy = 1.5
+
+[node name="DirectionalLight3D3" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.680545, 0.0513482, -0.730905, 0.236432, 0.92879, 0.285392, 0.693512, -0.367031, 0.619943, -8.05479, 4.76179, 8.00322)
+light_energy = 1.5
+
+[node name="DirectionalLight3D4" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.688093, -0.0473287, 0.724077, 0.236432, 0.92879, 0.285392, -0.686023, 0.367571, -0.627905, 8.02121, 4.76179, -7.99437)
+light_energy = 1.5
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_a202f")
+
+[node name="WebSocket" type="Node" parent="."]
+script = ExtResource("2_h2yge")

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holololo lollo lo lollo lo lo</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 10px;
+        }
+
+        .radio-group {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .radio-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #radio-container {
+            margin-top: 10px;
+        }
+
+        /* Red accent for buttons */
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        button:active {
+            background-color: #777;
+        }
+
+        #plus-btn,
+        #minus-btn {
+            color: #fff;
+            background-color: #28a745; /* Green */
+            border-color: #218838;
+        }
+
+        #plus-btn:hover,
+        #minus-btn:hover {
+            background-color: #218838;
+        }
+
+        #reset {
+            color: #fff;
+            background-color: #dc3545; /* Red */
+            border-color: #dc3545;
+        }
+
+        #reset:hover {
+            background-color: #c82333;
+        }
+
+        #cmd_box {
+            margin: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #222;
+            color: #fff;
+        }
+
+        #output {
+            font-size: 24px;
+        }
+
+        /* Style for the file list card */
+        .file-list-card {
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background-color: #222; /* Dark gray background */
+            height: fit-content;
+        }
+
+        .file-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        /* Style for the Load button */
+        .load-button {
+            color: #fff;
+            background-color: #dc3545; /* Red */
+            border-color: #dc3545;
+        }
+
+        .load-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="controls">
+                    <div class="radio-group" id="radio-group">
+                        <div id="radio-container"></div>
+                    </div>
+
+                    <div class="d-flex">
+                        <button id="plus-btn" onclick="sendCommand('+'); return false;">+</button>
+                        <button id="minus-btn" onclick="sendCommand('-'); return false;">-</button>
+                        <button id="reset" onclick="sendAll('reset'); return false;">Reset</button>
+                    </div>
+                    <div>
+                        <input id="cmd_box" type="text" name="cmd" class="form-control"/>
+                    </div>
+					<div>
+                        Commands:<br>
+						rpm N (ex: rpm 450)<br>
+						light N (ex: light 1.0)
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- File List Card -->
+                <div class="card file-list-card">
+                    <div>
+                        <label for="server-ip">Server IP (enter the local IP of this PC here):</label>
+                        <input id="server-ip" type="text" name="server-ip" class="form-control"/>
+                    </div>
+                    <div id="file-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var mySocket;
+        var existingOptions = new Set(); // Track existing options to prevent duplicates
+
+        window.addEventListener("load", function() {
+            // create websocket instance
+            mySocket = new WebSocket("ws://localhost/ws");
+            
+            // add event listener reacting when message is received
+            mySocket.onmessage = function (event) {
+                console.info(event.data);
+                
+                // Check if message is in "PING [id]" format
+                if (event.data.startsWith("PING ")) {
+                    const id = event.data.substring(5).trim();
+                    addRadioOption(id);
+                }
+            };
+
+            // Fetch file list and populate the card
+            fetch('/filelist')
+                .then(response => response.json())
+                .then(fileList => {
+                    const fileListContainer = document.getElementById('file-list');
+                    fileList.forEach(filename => {
+                        const listItem = document.createElement('div');
+                        listItem.classList.add('file-list-item');
+
+                        const fileNameSpan = document.createElement('span');
+                        fileNameSpan.textContent = filename;
+
+                        const loadButton = document.createElement('button');
+                        loadButton.textContent = 'Load';
+                        loadButton.classList.add('load-button'); // Add the load-button class
+                        loadButton.onclick = function() {
+                            loadFile(filename);
+                        };
+
+                        listItem.appendChild(fileNameSpan);
+                        listItem.appendChild(loadButton);
+                        fileListContainer.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error('Error fetching file list:', error));
+
+            // Get hostname from URL and set the server-ip input
+            const serverIpInput = document.getElementById('server-ip');
+            serverIpInput.value = window.location.hostname;
+        });
+
+        function send(id, str) {
+            mySocket.send(id + " " + str);
+        }
+
+        function sendAll(str) {
+            mySocket.send(str);
+        }
+
+        function addRadioOption(id) {
+            // Skip if we already have this option
+            if (existingOptions.has(id)) return;
+            existingOptions.add(id);
+            
+            const radioGroup = document.getElementById('radio-group');
+            const radioContainer = document.getElementById('radio-container');
+            
+            // Create radio input
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.id = `option-${id}`;
+            radio.name = 'mode';
+            radio.value = id;
+            
+            // Create label for the radio
+            const label = document.createElement('label');
+            label.htmlFor = `option-${id}`;
+            label.textContent = id;
+            
+            // Add elements to container
+            radioContainer.appendChild(radio);
+            radioContainer.appendChild(label);
+            radioContainer.appendChild(document.createElement('br'));
+            
+            // Check the first option by default
+            if (existingOptions.size === 1) {
+                radio.checked = true;
+            }
+        }
+
+        function getSelectedId() {
+            const selected = document.querySelector('input[name="mode"]:checked');
+            return selected ? selected.value : null;
+        }
+
+        function sendCommand(str) {
+            const selectedId = getSelectedId();
+            if (selectedId) {
+                send(selectedId, str);
+            } else {
+                console.warn("No option selected");
+            }
+        }
+
+        const cmd_box = document.getElementById('cmd_box');
+
+        cmd_box.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                cmd = cmd_box.value;
+                if (cmd.startsWith("model ") || cmd.startsWith("rpm ") || cmd.startsWith("light ")) {
+                    sendAll(cmd);
+                } else {
+                    sendCommand(cmd)
+                }
+                cmd_box.value = '';
+            }
+        });
+
+        function loadFile(filename) {
+            server_ip = document.getElementById('server-ip').value;
+            console.log("model http://" + server_ip + "/3d/" + filename);
+            sendAll("model http://" + server_ip + "/3d/" + filename);
+        }
+    </script>
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

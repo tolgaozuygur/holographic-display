@@ -1,0 +1,49 @@
+[gd_scene load_steps=5 format=3 uid="uid://mm8lb3coui2v"]
+
+[ext_resource type="Script" uid="uid://fsb2lfofoiqb" path="res://holo.gd" id="1_0xm2m"]
+[ext_resource type="Script" uid="uid://3hlhfbwpcrs0" path="res://websocket.gd" id="2_h2yge"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_noarx"]
+
+[sub_resource type="Environment" id="Environment_a202f"]
+background_mode = 1
+ambient_light_source = 1
+reflected_light_source = 1
+
+[node name="main" type="Node3D" node_paths=PackedStringArray("camera_node", "target_node", "websocket_node")]
+script = ExtResource("1_0xm2m")
+camera_node = NodePath("CameraNode")
+target_node = NodePath("Node3D")
+websocket_node = NodePath("WebSocket")
+
+[node name="Node3D" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(0.780136, 0.62561, 0, -0.62561, 0.780136, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_noarx")
+
+[node name="CameraNode" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraNode"]
+transform = Transform3D(1, 0, 0, 0, 0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 0.768135, 5.67327)
+fov = 35.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.535861, -0.534101, 0.653902, 0.338535, 0.84542, 0.413108, -0.773464, 0, 0.63384, 4.42844, 4.70451, 6.9023)
+light_energy = 6.0
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.592533, 0.370606, -0.715232, 0.236432, 0.92879, 0.285392, 0.770068, 0, -0.637962, -4.95722, 4.76179, -7.40622)
+light_color = Color(0.72, 0.804, 1, 1)
+light_energy = 6.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_a202f")
+
+[node name="WebSocket" type="Node" parent="."]
+script = ExtResource("2_h2yge")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.76207, 0)
+omni_range = 7.43
+omni_attenuation = 3.095
